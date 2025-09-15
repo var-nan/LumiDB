@@ -3,7 +3,7 @@
 InMemoryStore_Wal::InMemoryStore_Wal(const std::string& filename): 
     log_filename{filename}, log_writer{log_filename}{
 
-    recover(); // recover from crash.
+    // recover(); // recover from crash.
 }
 
 void InMemoryStore_Wal::insert_record(std::string key, std::string value) {
@@ -19,15 +19,15 @@ std::string InMemoryStore_Wal::get_value(std::string key) {
 }
 
 void InMemoryStore_Wal::delete_key(std::string key) {
-    log_writer.append({LogEntryType::DELETE, key, ""});
+    log_writer.append({LogEntryType::DELETE, key, std::string{}});
     log_writer.flush();
 
     im_store.delete_key(key);
 }
 
 void InMemoryStore_Wal::recover() {
-    LogReader log_reader{log_filename};
-    std::cout << "Opening log file for recovery." << std::endl;
+    StringLogReader log_reader{log_filename};
+    // std::cout << "Opening log file for recovery." << std::endl;
     while(log_reader.hasNext()){
         LogEntry entry = log_reader.next();
         if (entry.entry_type == LogEntryType::PUT) {

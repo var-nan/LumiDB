@@ -11,9 +11,9 @@
 #include <cstring>
 
 
-enum class LogEntryType {
-    PUT,
-    DELETE
+enum class LogEntryType : uint8_t {
+    PUT = 0,
+    DELETE = 1
 };
 
 typedef struct {
@@ -22,41 +22,78 @@ typedef struct {
     std::string value;
 } LogEntry;
 
+class LogWriterInterface{
+public:
+    virtual void append(const LogEntry& log_entry) = 0;
+    virtual void flush() = 0;
+};
 
-class LogWriter {
+class LogReaderInterface {
+public:
+    virtual bool hasNext() = 0;
+    virtual LogEntry next() = 0;
+};
+
+
+class StringLogWriter : public LogWriterInterface {
 private:
     std::ofstream out;
 
 public:
-    LogWriter(const std::string& filename): out{filename, std::ios::out | std::ios::app | std::ios::binary}{
+    StringLogWriter(const std::string& filename);
+    void append(const LogEntry& log_entry) override;
+    void flush() override;
+};
+
+
+class StringLogReader : public LogReaderInterface {
+private:
+    std::ifstream in;
+
+public:
+    StringLogReader(const std::string& filename);
+    bool hasNext() override;
+    LogEntry next() override;
+};
+
+
+
+class ByteLogWriter : public LogWriterInterface{
+private:
+    std::ofstream out;
+
+public:
+    ByteLogWriter(const std::string& filename): out{filename, std::ios::out | std::ios::app | std::ios::binary}{
         // out.open(filename, std::ios::app | std::ios::out);
-        std::cout << "Log file: " << filename << " opened." << std::endl;
+        // std::cout << "Log file: " << filename << " opened." << std::endl;
     }
 
-    void append(const LogEntry& log_entry);
+    void append(const LogEntry& log_entry) override;
 
-    void flush(); // flush write buffer to disk periodically (ideally after every append).
+    void flush() override; // flush write buffer to disk periodically (ideally after every append).
 
-    ~LogWriter() {
+    ~ByteLogWriter() {
         out.close();
     } // clear file contents ?
 };
 
-class LogReader {
+class ByteLogReader : public LogReaderInterface {
 private:
     std::ifstream in;
-    char record_buffer[1024];
+    // char record_buffer[1024];
+    size_t nread = 0;
 
 public:
-    LogReader(const std::string& file) : in{file, std::ios::in | std::ios::binary} {
-        std::cout << "log file opened for recovery" << std::endl;
+    ByteLogReader(const std::string& file) : in{file, std::ios::in | std::ios::binary} {
+        // std::cout << "log file opened for recovery" << std::endl;
     }
 
-    bool hasNext();
+    bool hasNext() override;
 
-    LogEntry next();
+    LogEntry next() override;
 
-    ~LogReader() {
+    ~ByteLogReader() {
+        std::cout << "Read " << nread << " bytes from log file" << std::endl;
         in.close();
     }
 

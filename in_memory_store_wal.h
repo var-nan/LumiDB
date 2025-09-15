@@ -13,7 +13,7 @@ private:
     // NOTE:: In constructor, the variables are initialized as per order of definition in the class variable.
     InMemoryStore im_store;
     std::string log_filename;
-    LogWriter log_writer;
+    StringLogWriter log_writer;
 
     void recover();
 
